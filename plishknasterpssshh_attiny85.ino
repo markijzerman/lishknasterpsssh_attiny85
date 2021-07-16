@@ -1,8 +1,12 @@
  #include <SimpleTimer.h>
  #include <Morse.h>
 
- int WPM = 15;
- int flashPin = 0;
+ int WPM = 15; // 15!
+ int flashPin = 13; // 0 for ATTINY85!
+ int breakCounter = 0;
+ int breakTime = 120000; // 2 mins
+ bool breakAction = false;
+ unsigned long savedTime = 0;
 
  // Class declaration
  Morse morse(flashPin, WPM);
@@ -225,13 +229,31 @@ char buffer[65];
  // a function to be executed periodically
  void repeatMe()
  {
+  if( breakCounter > 4) {
+    if (breakAction == false) {
+      breakAction = true;
+      savedTime = millis();
+    }
+
+          while(millis() < savedTime + breakTime) {
+            // wait
+          }
+
+            breakAction = false;
+            breakCounter = 0;
+            savedTime = 0;
+      }
+
+  else {
    morse.update();
+   breakAction = false;
+
+  }
  }
 
  void setup()
  { 
-    //Serial.begin(9600);
-//    pixels.begin(); // This initializes the NeoPixel library.
+    randomSeed(analogRead(0));
     timer.setInterval(1, repeatMe);
 
     delay(1000);
@@ -245,5 +267,9 @@ char buffer[65];
    if (morse.busy == 0) {
       strcpy_P(buffer, (char*)pgm_read_word(&(string_table[random(numOfStrings)]))); // Necessary casts and dereferencing, just copy.
       morse.send(buffer); 
+      
+      breakCounter ++;
+
+
    }
  }
