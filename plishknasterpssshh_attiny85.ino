@@ -2,7 +2,7 @@
  #include <Morse.h>
 
  int WPM = 15; // 15!
- int flashPin = 13; // 0 for ATTINY85!
+ int flashPin = 0; // 0 for ATTINY85!
  int analogSeedPin = 2; // 2 is A1 it seems on attiny85
  int k;
  unsigned long breakTime = 120000; // 2 minutes
