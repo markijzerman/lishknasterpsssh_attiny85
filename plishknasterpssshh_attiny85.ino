@@ -3,14 +3,14 @@
 
  int WPM = 15; // 15!
  int flashPin = 13; // 0 for ATTINY85!
- int breakCounter = 0;
- int breakTime = 120000; // 2 mins
- bool breakAction = false;
- unsigned long savedTime = 0;
+ int analogSeedPin = 2; // 2 is A1 it seems on attiny85
+ int k;
+ unsigned long breakTime = 120000; // 2 minutes
 
  // Class declaration
  Morse morse(flashPin, WPM);
  SimpleTimer timer;
+ 
 
  // Set the strings first
 #include <avr/pgmspace.h>
@@ -227,49 +227,35 @@ string_99,
 char buffer[65];
 
  // a function to be executed periodically
- void repeatMe()
- {
-  if( breakCounter > 4) {
-    if (breakAction == false) {
-      breakAction = true;
-      savedTime = millis();
-    }
-
-          while(millis() < savedTime + breakTime) {
-            // wait
-          }
-
-            breakAction = false;
-            breakCounter = 0;
-            savedTime = 0;
-      }
-
-  else {
+ void repeatMe(){
    morse.update();
-   breakAction = false;
-
-  }
  }
+
+int repeatTimer;
 
  void setup()
  { 
-    randomSeed(analogRead(0));
-    timer.setInterval(1, repeatMe);
-
+    randomSeed(analogRead(analogSeedPin));
+    repeatTimer = timer.setInterval(1, repeatMe);
     delay(1000);
-
  }
 
  void loop() {
    timer.run();
    // if the board is not busy, send next message
+   
+  if (k < 4) {
+       if (morse.busy == 0) {
+          strcpy_P(buffer, (char*)pgm_read_word(&(string_table[random(numOfStrings)]))); // Necessary casts and dereferencing, just copy.
+          morse.send(buffer); 
+          k++;
+       }
+  }
 
-   if (morse.busy == 0) {
-      strcpy_P(buffer, (char*)pgm_read_word(&(string_table[random(numOfStrings)]))); // Necessary casts and dereferencing, just copy.
-      morse.send(buffer); 
-      
-      breakCounter ++;
-
-
-   }
+  else {
+      delay(breakTime);
+      k = 0;
+      timer.restartTimer(repeatTimer);
+  }
+   
  }
